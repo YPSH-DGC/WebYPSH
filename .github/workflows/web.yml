@@ -1,0 +1,49 @@
+name: build-web
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare v86 runtime (wasm/js)
+        run: |
+          mkdir -p web/v86
+          curl -fsSL -o web/v86/v86_all.js https://unpkg.com/v86/build/v86_all.js
+          curl -fsSL -o web/v86/v86.wasm   https://unpkg.com/v86/build/v86.wasm
+
+      - name: Fetch latest stable PyYPSH
+        run: |
+          chmod +x scripts/fetch_ypsh.sh
+          ./scripts/fetch_ypsh.sh artifacts
+          echo "YPSH_TAG=$(cat artifacts/tag.txt)" >> $GITHUB_ENV
+
+      - name: Build browser disk image (hda.img)
+        run: |
+          chmod +x scripts/build_web_image.sh
+          sudo ./scripts/build_web_image.sh artifacts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebYPSH-${{ env.YPSH_TAG }}
+          path: web/**
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
