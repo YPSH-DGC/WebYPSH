@@ -21,6 +21,12 @@ jobs:
           curl -fsSL -o v86/v86_all.js https://unpkg.com/v86/build/v86_all.js
           curl -fsSL -o v86/v86.wasm   https://unpkg.com/v86/build/v86.wasm
 
+      - name: Fetch kernel (bzImage) for v86
+        run: |
+          mkdir -p assets
+          curl --compressed -fL -o assets/bzImage https://i.copy.sh/buildroot-bzimage68.bin
+          test $(wc -c < assets/bzImage) -ge 5000000
+
       - name: Fetch latest stable PyYPSH
         run: |
           chmod +x scripts/fetch_ypsh.sh
