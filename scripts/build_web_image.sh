@@ -24,13 +24,12 @@ sudo chroot "$ROOT" /bin/bash -euxc "
   apt-get update
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3 python3-pip python3-setuptools \
-    locales tzdata ca-certificates curl less nano procps coreutils base64 \
+    locales tzdata ca-certificates curl less nano procps coreutils \
     libzstd1 libssl3 libglib2.0-0 libx11-6 libxext6 libxrender1 \
     libxcb1 libxcb-util1 libxcb-keysyms1 libxcb-image0 libxcb-icccm4 \
     libxcb-shape0 libxcb-shm0 libxcb-randr0 libxcb-render0 libxcb-xfixes0 \
     libxcb-xinerama0 libxcb-xkb1 libxkbcommon0 libxkbcommon-x11-0 \
     libfontconfig1 libfreetype6 libgcc-s1 libstdc++6
-  locale-gen en_US.UTF-8 || true
 "
 
 echo "[*] Copy app sources"
