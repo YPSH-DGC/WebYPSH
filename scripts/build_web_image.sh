@@ -53,10 +53,9 @@ mkfs.ext4 -F "$IMG"
 mkdir -p "$MNT"
 sudo mount -o loop "$IMG" "$MNT"
 
-echo "[*] Copy rootfs → image"
-sudo rsync -aHAX --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/tmp "$ROOT/ " "$MNT/"
-sudo mkdir -p "$MNT"/{proc,sys,dev,tmp}
-sudo umount "$MNT"
+sudo rsync -aHAX \
+  --exclude=/proc/* --exclude=/sys/* --exclude=/dev/* --exclude=/tmp/* \
+  "$ROOT"/  "$MNT"/
 
 mv "$IMG" assets/hda.img
 echo "[+] Built: assets/hda.img ($(du -h assets/hda.img | awk '{print $1}'))"
