@@ -5,7 +5,6 @@
   <title>WebYPSH</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.4.0/css/xterm.css"/>
-  <script src="./v86/v86_all.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.4.0/lib/xterm.min.js"></script>
   <style>
     html,body {height:100%;margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace}
@@ -22,11 +21,11 @@
     <button id="ctrlc">Ctrl-C</button>
   </div>
   <div id="term"></div>
+  <script src="./v86/v86.js"></script>
   <script>
     const term = new Terminal({convertEol:true,cursorBlink:true,fontSize:14});
     term.open(document.getElementById('term'));
-
-    const emu = new V86({
+    const emu = new V86Starter({
       wasm_path: "./v86/v86.wasm",
       memory_size: 512 * 1024 * 1024,
       vga_memory_size: 8 * 1024 * 1024,
@@ -35,7 +34,6 @@
       cmdline: "console=ttyS0 root=/dev/sda rw init=/bin/bash",
       autostart: true,
     });
-
     emu.add_listener("serial0-output-char", c => term.write(c));
     term.onData(d => emu.serial0_send(d));
     emu.add_listener("emulator-ready", () => {
