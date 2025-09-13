@@ -17,9 +17,13 @@ jobs:
 
       - name: Prepare v86 runtime under /
         run: |
-          mkdir -p v86
-          curl -fsSL -o v86/v86_all.js https://unpkg.com/v86/build/v86_all.js
-          curl -fsSL -o v86/v86.wasm   https://unpkg.com/v86/build/v86.wasm
+            set -e
+            mkdir -p v86
+            fetch() { url="$1"; out="$2"; echo "[GET] $url -> $out"; curl -fSL "$url" -o "$out"; }
+            fetch https://cdn.jsdelivr.net/npm/v86/build/v86.js   v86/v86.js   || fetch https://unpkg.com/v86/build/v86.js   v86/v86.js
+            fetch https://cdn.jsdelivr.net/npm/v86/build/v86.wasm v86/v86.wasm || fetch https://unpkg.com/v86/build/v86.wasm v86/v86.wasm
+            test -s v86/v86.js
+            test $(wc -c < v86/v86.wasm) -ge 100000
 
       - name: Fetch kernel (bzImage) for v86
         run: |
