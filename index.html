@@ -5,21 +5,38 @@
   <title>WebYPSH</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+  <style>
+    html,body{height:100%;margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace}
+    #toolbar{height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a}
+    #term{height:calc(100dvh - 48px)}
+    button{padding:6px 10px;border-radius:8px;border:0;background:#2a2a2a;color:#eee}
+  </style>
 </head>
-<body style="margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace">
-  <div id="toolbar" style="height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a">
-    <button id="ctrlc" style="padding:6px 10px;border-radius:8px;border:0;background:#2a2a2a;color:#eee">Ctrl-C</button>
+<body>
+  <div id="toolbar">
+    <button id="ctrlc">Ctrl-C</button>
   </div>
-  <div id="term" style="height:calc(100dvh - 48px)"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
-  <script src="./v86/libv86.js"></script>
+  <div id="term"></div>
   <script>
-    (function initWhenReady() {
-      if (!window.Terminal) {
-        console.error("xterm not loaded yet"); return setTimeout(initWhenReady, 100);
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.async = false;
+        s.onload = () => resolve(src);
+        s.onerror = () => reject(new Error('Failed to load: ' + src));
+        document.head.appendChild(s);
+      });
+    }
+
+    (async () => {
+      await loadScript("https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js");
+      try {
+        await loadScript("./v86/libv86.js");
+      } catch {
+        await loadScript("https://cdn.jsdelivr.net/npm/v86@0.5.253/build/libv86.js");
       }
-      if (!window.V86Starter) {
-        console.error("libv86 not loaded yet"); return setTimeout(initWhenReady, 100);
+      if (!('Terminal' in window) || !('V86Starter' in window)) {
+        console.error('必要なライブラリが読み込めていません'); return;
       }
       const term = new Terminal({ convertEol: true, cursorBlink: true, fontSize: 14 });
       term.open(document.getElementById('term'));
@@ -34,6 +51,7 @@
       });
       emu.add_listener("serial0-output-char", c => term.write(c));
       term.onData(d => emu.serial0_send(d));
+      document.getElementById('ctrlc').onclick = () => emu.serial0_send("\x03");
       emu.add_listener("emulator-ready", () => {
         const cmds = [
           "mount -t proc proc /proc\n",
@@ -46,16 +64,7 @@
         }, 800);
         feed();
       });
-      document.getElementById('ctrlc').onclick = () => emu.serial0_send("\x03");
     })();
-  </script>
-  <script>
-    if (!('V86Starter' in window)) {
-      const s = document.createElement('script');
-      s.src = "https://cdn.jsdelivr.net/npm/v86@0.5.253/build/libv86.js";
-      s.onload = () => console.log("fallback libv86 loaded");
-      document.body.appendChild(s);
-    }
   </script>
 </body>
 </html>
