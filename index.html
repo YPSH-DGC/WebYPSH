@@ -4,8 +4,9 @@
   <meta charset="utf-8"/>
   <title>WebYPSH</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.4.0/css/xterm.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/xterm@5.4.0/lib/xterm.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+  <script src="./v86/libv86.js"></script>
   <style>
     html,body {height:100%;margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace}
     #toolbar{height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a}
@@ -21,10 +22,10 @@
     <button id="ctrlc">Ctrl-C</button>
   </div>
   <div id="term"></div>
-  <script src="./v86/v86.js"></script>
   <script>
-    const term = new Terminal({convertEol:true,cursorBlink:true,fontSize:14});
+    const term = new Terminal({ convertEol: true, cursorBlink: true });
     term.open(document.getElementById('term'));
+
     const emu = new V86Starter({
       wasm_path: "./v86/v86.wasm",
       memory_size: 512 * 1024 * 1024,
@@ -34,29 +35,24 @@
       cmdline: "console=ttyS0 root=/dev/sda rw init=/bin/bash",
       autostart: true,
     });
+
     emu.add_listener("serial0-output-char", c => term.write(c));
     term.onData(d => emu.serial0_send(d));
+
     emu.add_listener("emulator-ready", () => {
-      const boot = [
+      const cmds = [
         "mount -t proc proc /proc\n",
         "export HOME=/root\n",
         "cd /root\n",
         "python3 /root/ypsh.py\n"
       ];
       const feed = () => setTimeout(() => {
-        if (boot.length) { emu.serial0_send(boot.shift()); feed(); }
+        if (cmds.length) { emu.serial0_send(cmds.shift()); feed(); }
       }, 800);
       feed();
     });
 
-    document.getElementById('ctrlc').onclick = () => emu.serial0_send("\x03");
-    document.getElementById('upload').onclick = async () => {
-      const f = document.getElementById('u').files[0]; if (!f) return;
-      const buf = await f.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      term.writeln(`\r\n[uploading ${f.name}]`);
-      emu.serial0_send(`cat <<'___EOF' | base64 -d > /root/${f.name}\n${b64}\n___EOF\n`);
-    };
+    document.getElementById('ctrlc')?.addEventListener('click', () => emu.serial0_send("\x03"));
   </script>
 </body>
 </html>
