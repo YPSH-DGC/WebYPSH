@@ -39,8 +39,10 @@ sudo cp "$ART_DIR/requirements.txt" "$ROOT/root/requirements.txt"
 
 echo "[*] pip install (system, no venv)"
 sudo chroot "$ROOT" /bin/bash -euxc "
-  python3 -m pip install --upgrade pip
-  pip install --no-cache-dir -r /root/requirements.txt
+  export PIP_DISABLE_PIP_VERSION_CHECK=1
+  export PIP_BREAK_SYSTEM_PACKAGES=1
+  python3 -m pip install --upgrade pip --break-system-packages
+  pip install --no-cache-dir --break-system-packages -r /root/requirements.txt
   apt-get clean
   rm -rf /var/lib/apt/lists/*
 "
