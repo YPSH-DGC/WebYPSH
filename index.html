@@ -5,54 +5,57 @@
   <title>WebYPSH</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+</head>
+<body style="margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace">
+  <div id="toolbar" style="height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a">
+    <button id="ctrlc" style="padding:6px 10px;border-radius:8px;border:0;background:#2a2a2a;color:#eee">Ctrl-C</button>
+  </div>
+  <div id="term" style="height:calc(100dvh - 48px)"></div>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
   <script src="./v86/libv86.js"></script>
-  <style>
-    html,body {height:100%;margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace}
-    #toolbar{height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a}
-    #term{height:calc(100% - 48px)}
-    button{padding:6px 10px;border-radius:8px;border:0;background:#2a2a2a;color:#eee}
-    input[type=file]{color:#ccc}
-  </style>
-</head>
-<body>
-  <div id="toolbar">
-    <input type="file" id="u">
-    <button id="upload">Upload to /root</button>
-    <button id="ctrlc">Ctrl-C</button>
-  </div>
-  <div id="term"></div>
   <script>
-    const term = new Terminal({ convertEol: true, cursorBlink: true });
-    term.open(document.getElementById('term'));
-
-    const emu = new V86Starter({
-      wasm_path: "./v86/v86.wasm",
-      memory_size: 512 * 1024 * 1024,
-      vga_memory_size: 8 * 1024 * 1024,
-      bzimage: { url: "./assets/bzImage" },
-      hda:     { url: "./assets/hda.img" },
-      cmdline: "console=ttyS0 root=/dev/sda rw init=/bin/bash",
-      autostart: true,
-    });
-
-    emu.add_listener("serial0-output-char", c => term.write(c));
-    term.onData(d => emu.serial0_send(d));
-
-    emu.add_listener("emulator-ready", () => {
-      const cmds = [
-        "mount -t proc proc /proc\n",
-        "export HOME=/root\n",
-        "cd /root\n",
-        "python3 /root/ypsh.py\n"
-      ];
-      const feed = () => setTimeout(() => {
-        if (cmds.length) { emu.serial0_send(cmds.shift()); feed(); }
-      }, 800);
-      feed();
-    });
-
-    document.getElementById('ctrlc')?.addEventListener('click', () => emu.serial0_send("\x03"));
+    (function initWhenReady() {
+      if (!window.Terminal) {
+        console.error("xterm not loaded yet"); return setTimeout(initWhenReady, 100);
+      }
+      if (!window.V86Starter) {
+        console.error("libv86 not loaded yet"); return setTimeout(initWhenReady, 100);
+      }
+      const term = new Terminal({ convertEol: true, cursorBlink: true, fontSize: 14 });
+      term.open(document.getElementById('term'));
+      const emu = new V86Starter({
+        wasm_path: "./v86/v86.wasm",
+        memory_size: 512 * 1024 * 1024,
+        vga_memory_size: 8 * 1024 * 1024,
+        bzimage: { url: "./assets/bzImage" },
+        hda:     { url: "./assets/hda.img" },
+        cmdline: "console=ttyS0 root=/dev/sda rw init=/bin/bash",
+        autostart: true,
+      });
+      emu.add_listener("serial0-output-char", c => term.write(c));
+      term.onData(d => emu.serial0_send(d));
+      emu.add_listener("emulator-ready", () => {
+        const cmds = [
+          "mount -t proc proc /proc\n",
+          "export HOME=/root\n",
+          "cd /root\n",
+          "python3 /root/ypsh.py\n"
+        ];
+        const feed = () => setTimeout(() => {
+          if (cmds.length) { emu.serial0_send(cmds.shift()); feed(); }
+        }, 800);
+        feed();
+      });
+      document.getElementById('ctrlc').onclick = () => emu.serial0_send("\x03");
+    })();
+  </script>
+  <script>
+    if (!('V86Starter' in window)) {
+      const s = document.createElement('script');
+      s.src = "https://cdn.jsdelivr.net/npm/v86@0.5.253/build/libv86.js";
+      s.onload = () => console.log("fallback libv86 loaded");
+      document.body.appendChild(s);
+    }
   </script>
 </body>
 </html>
