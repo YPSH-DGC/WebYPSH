@@ -2,18 +2,18 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PyYPSH (Web)</title>
+  <title>WebYPSH</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.4.0/css/xterm.css"/>
-  <style>
-    html,body { height:100%; margin:0; background:#111; color:#eee; font-family:ui-monospace,monospace }
-    #toolbar { height:48px; display:flex; align-items:center; gap:8px; padding:8px; background:#1a1a1a; }
-    #term { height:calc(100% - 48px); }
-    button { padding:6px 10px; border-radius:8px; border:0; background:#2a2a2a; color:#eee }
-    input[type=file] { color:#ccc }
-  </style>
   <script src="./v86/v86_all.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.4.0/lib/xterm.min.js"></script>
+  <style>
+    html,body {height:100%;margin:0;background:#111;color:#eee;font-family:ui-monospace,monospace}
+    #toolbar{height:48px;display:flex;align-items:center;gap:8px;padding:8px;background:#1a1a1a}
+    #term{height:calc(100% - 48px)}
+    button{padding:6px 10px;border-radius:8px;border:0;background:#2a2a2a;color:#eee}
+    input[type=file]{color:#ccc}
+  </style>
 </head>
 <body>
   <div id="toolbar">
@@ -23,7 +23,7 @@
   </div>
   <div id="term"></div>
   <script>
-    const term = new Terminal({convertEol:true, cursorBlink:true, fontSize:14});
+    const term = new Terminal({convertEol:true,cursorBlink:true,fontSize:14});
     term.open(document.getElementById('term'));
 
     const emu = new V86({
@@ -37,7 +37,7 @@
     });
 
     emu.add_listener("serial0-output-char", c => term.write(c));
-    term.onData(data => emu.serial0_send(data));
+    term.onData(d => emu.serial0_send(d));
     emu.add_listener("emulator-ready", () => {
       const boot = [
         "mount -t proc proc /proc\n",
@@ -52,7 +52,6 @@
     });
 
     document.getElementById('ctrlc').onclick = () => emu.serial0_send("\x03");
-
     document.getElementById('upload').onclick = async () => {
       const f = document.getElementById('u').files[0]; if (!f) return;
       const buf = await f.arrayBuffer();

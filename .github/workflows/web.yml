@@ -15,11 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare v86 runtime (wasm/js)
+      - name: Prepare v86 runtime under /
         run: |
-          mkdir -p web/v86
-          curl -fsSL -o web/v86/v86_all.js https://unpkg.com/v86/build/v86_all.js
-          curl -fsSL -o web/v86/v86.wasm   https://unpkg.com/v86/build/v86.wasm
+          mkdir -p v86
+          curl -fsSL -o v86/v86_all.js https://unpkg.com/v86/build/v86_all.js
+          curl -fsSL -o v86/v86.wasm   https://unpkg.com/v86/build/v86.wasm
 
       - name: Fetch latest stable PyYPSH
         run: |
@@ -27,7 +27,7 @@ jobs:
           ./scripts/fetch_ypsh.sh artifacts
           echo "YPSH_TAG=$(cat artifacts/tag.txt)" >> $GITHUB_ENV
 
-      - name: Build browser disk image (hda.img)
+      - name: Build browser disk image (assets/hda.img)
         run: |
           chmod +x scripts/build_web_image.sh
           sudo ./scripts/build_web_image.sh artifacts
@@ -36,14 +36,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WebYPSH-${{ env.YPSH_TAG }}
-          path: web/**
+          path: |
+            index.html
+            v86/**
+            assets/**
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: .
       - name: Deploy to Pages
         id: deployment
         uses: actions/deploy-pages@v4

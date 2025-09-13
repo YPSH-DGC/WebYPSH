@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 入力: artifacts ディレクトリ（fetch_ypsh.sh の出力）
 ART_DIR="${1:-artifacts}"
 [[ -f "$ART_DIR/ypsh.py" && -f "$ART_DIR/requirements.txt" ]] || { echo "[-] artifacts missing"; exit 1; }
 
-# 出力: web/assets/hda.img  を作る
 DIST=${DIST:-bookworm}
 ARCH=${ARCH:-amd64}
 IMG_MB=${IMG_MB:-4096}
@@ -14,7 +12,7 @@ ROOT="$WORKDIR/rootfs"
 IMG="$WORKDIR/hda.img"
 MNT="$WORKDIR/mnt"
 
-sudo rm -rf "$WORKDIR"; mkdir -p "$WORKDIR" web/assets
+sudo rm -rf "$WORKDIR"; mkdir -p "$WORKDIR" assets
 sudo apt-get update
 sudo apt-get install -y debootstrap e2fsprogs rsync ca-certificates
 
@@ -55,12 +53,9 @@ mkdir -p "$MNT"
 sudo mount -o loop "$IMG" "$MNT"
 
 echo "[*] Copy rootfs → image"
-sudo rsync -aHAX \
-  --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/tmp \
-  "$ROOT/ " "$MNT/"
-
+sudo rsync -aHAX --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/tmp "$ROOT/ " "$MNT/"
 sudo mkdir -p "$MNT"/{proc,sys,dev,tmp}
 sudo umount "$MNT"
 
-mv "$IMG" web/assets/hda.img
-echo "[+] Built: web/assets/hda.img ($(du -h web/assets/hda.img | awk '{print $1}'))"
+mv "$IMG" assets/hda.img
+echo "[+] Built: assets/hda.img ($(du -h assets/hda.img | awk '{print $1}'))"
